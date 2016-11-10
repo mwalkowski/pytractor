@@ -15,13 +15,13 @@
 import unittest
 
 from mock import MagicMock, patch, PropertyMock, DEFAULT
+from nose_parameterized import parameterized
 
 from selenium.common.exceptions import NoSuchElementException
 
 from pytractor.exceptions import AngularNotFoundException
 from pytractor.mixins import (WebDriverMixin, angular_wait_required,
-                              CLIENT_SCRIPTS_DIR)
-
+                              CLIENT_SCRIPTS_DIR, AngularVersion)
 
 try:  # FIXME: find another way
     import __builtin__
@@ -108,7 +108,9 @@ class WebDriverMixinTest(unittest.TestCase):
                                        self.mock_root_element)
 
     @patch('pytractor.mixins.resource_string')
-    def verify__execute_client_script_call(self, async, mock_resource_string):
+    def verify__execute_client_script_call(self, async, angular_version,
+                                           hybrid, mock_resource_string):
+        self.instance.angular_version = angular_version
         with patch.multiple(
             self.instance,
             execute_async_script=DEFAULT, execute_script=DEFAULT,
@@ -131,22 +133,35 @@ class WebDriverMixinTest(unittest.TestCase):
         script_content = mock_resource_string.return_value.decode()
         if async:
             mock_execute_async_script.assert_called_once_with(script_content,
-                                                              mock_arg)
+                                                              mock_arg,
+                                                              hybrid)
             self.assertEqual(len(mock_execute_script.mock_calls), 0)
             # the result is the one from execute_async_script()
             self.assertIs(result, mock_execute_async_script.return_value)
         else:
             mock_execute_script.assert_called_once_with(script_content,
-                                                        mock_arg)
+                                                        mock_arg,
+                                                        hybrid)
             self.assertEqual(len(mock_execute_async_script.mock_calls), 0)
             # the result is the one from execute_script()
             self.assertIs(result, mock_execute_script.return_value)
 
-    def test__execute_client_script_async(self):
-        self.verify__execute_client_script_call(True)
+    @parameterized.expand([
+        (AngularVersion.VER_1, False),
+        (AngularVersion.HYBRID, True),
+        (AngularVersion.VER_2, False)
+    ])
+    def test__execute_client_script_async(self, angular_version, hybrid):
+        self.verify__execute_client_script_call(True, angular_version, hybrid)
 
-    def test__execute_client_script_sync(self):
-        self.verify__execute_client_script_call(False)
+    @parameterized.expand([
+        (AngularVersion.VER_1, False),
+        (AngularVersion.HYBRID, True),
+        (AngularVersion.VER_2, False)
+    ])
+    def test__execute_client_script_sync(self, angular_version, hybrid):
+        print(hybrid)
+        self.verify__execute_client_script_call(False, angular_version, hybrid)
 
     def verify_function_executes_script_with(self, func_to_call,
                                              script_name, *script_args,
@@ -347,7 +362,7 @@ class WebDriverMixinTest(unittest.TestCase):
         ) as mock_methods:
             mock_test_for_angular = mock_methods['_test_for_angular']
             # return a falsy value to indicate that angular was not found
-            mock_test_for_angular.return_value = (False, 'ERROR')
+            mock_test_for_angular.return_value = {'message': 'ERROR'}
             mock_execute_script = mock_methods['execute_script']
 
             with self.assertRaises(AngularNotFoundException):

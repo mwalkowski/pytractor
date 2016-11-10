@@ -73,6 +73,7 @@ setup(
     tests_require=[
         'nose>=1.3.7',
         'mock>=1.3.0',
+        'nose_parameterized==0.5.0'
     ],
     test_suite='nose.collector',
     use_2to3=True

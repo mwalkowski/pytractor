@@ -48,6 +48,16 @@ COMMANDS_NEEDING_WAIT = [
 ]
 
 
+class AngularVersion(object):
+    VER_1 = 'ng1'
+    HYBRID = 'hybrid'
+    VER_2 = 'ng2'
+
+    @staticmethod
+    def is_hybrid(version):
+        return True if version is AngularVersion.HYBRID else False
+
+
 def angular_wait_required(wrapped):
     @wraps(wrapped)
     def wait_for_angular(driver, *args, **kwargs):
@@ -67,10 +77,11 @@ class WebDriverMixin(object):
     """  # docstring adapted from protractor.js
 
     def __init__(self, base_url='', root_element='body', script_timeout=10,
-                 test_timeout=10, *args, **kwargs):
+                 test_timeout=10, angular_version=AngularVersion.VER_1, *args, **kwargs):
         self._base_url = base_url
         self._root_element = root_element
         self._test_timeout = test_timeout
+        self.angular_version = angular_version
         super(WebDriverMixin, self).__init__(*args, **kwargs)
         self.set_script_timeout(script_timeout)
 
@@ -80,6 +91,9 @@ class WebDriverMixin(object):
         js_script = resource_string(__name__,
                                     '{}/{}'.format(CLIENT_SCRIPTS_DIR,
                                                    file_name))
+
+        args = args + (AngularVersion.is_hybrid(self.angular_version), )
+
         if js_script:
             js_script = js_script.decode('UTF-8')
         if async:
@@ -213,9 +227,8 @@ class WebDriverMixin(object):
 
         if not self.ignore_synchronization:
             test_result = self._test_for_angular()
-            angular_on_page = test_result[0]
-            if not angular_on_page:
-                message = test_result[1]
+            if not test_result or 'message' in test_result:
+                message = test_result['message']
                 raise AngularNotFoundException(
                     'Angular could not be found on page: {}:'
                     ' {}'.format(full_url, message)
