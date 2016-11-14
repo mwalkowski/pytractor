@@ -32,6 +32,8 @@ CLIENT_SCRIPTS_DIR = 'protractor/extracted'
 DEFER_LABEL = 'NG_DEFER_BOOTSTRAP!'
 # These are commands that need synchronization with the angular app.
 COMMANDS_NEEDING_WAIT = [
+    Command.FIND_ELEMENT,
+    Command.FIND_ELEMENTS,
     Command.CLICK_ELEMENT,
     Command.SEND_KEYS_TO_ELEMENT,
     Command.GET_ELEMENT_TAG_NAME,
