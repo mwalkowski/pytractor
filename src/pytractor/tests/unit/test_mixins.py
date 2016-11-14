@@ -15,7 +15,6 @@
 import unittest
 
 from mock import MagicMock, patch, PropertyMock, DEFAULT
-from nose_parameterized import parameterized
 
 from selenium.common.exceptions import NoSuchElementException
 
@@ -108,9 +107,7 @@ class WebDriverMixinTest(unittest.TestCase):
                                        self.mock_root_element)
 
     @patch('pytractor.mixins.resource_string')
-    def verify__execute_client_script_call(self, async, angular_version,
-                                           hybrid, mock_resource_string):
-        self.instance.angular_version = angular_version
+    def verify__execute_client_script_call(self, async, mock_resource_string):
         with patch.multiple(
             self.instance,
             execute_async_script=DEFAULT, execute_script=DEFAULT,
@@ -133,35 +130,22 @@ class WebDriverMixinTest(unittest.TestCase):
         script_content = mock_resource_string.return_value.decode()
         if async:
             mock_execute_async_script.assert_called_once_with(script_content,
-                                                              mock_arg,
-                                                              hybrid)
+                                                              mock_arg)
             self.assertEqual(len(mock_execute_script.mock_calls), 0)
             # the result is the one from execute_async_script()
             self.assertIs(result, mock_execute_async_script.return_value)
         else:
             mock_execute_script.assert_called_once_with(script_content,
-                                                        mock_arg,
-                                                        hybrid)
+                                                        mock_arg)
             self.assertEqual(len(mock_execute_async_script.mock_calls), 0)
             # the result is the one from execute_script()
             self.assertIs(result, mock_execute_script.return_value)
 
-    @parameterized.expand([
-        (AngularVersion.VER_1, False),
-        (AngularVersion.HYBRID, True),
-        (AngularVersion.VER_2, False)
-    ])
-    def test__execute_client_script_async(self, angular_version, hybrid):
-        self.verify__execute_client_script_call(True, angular_version, hybrid)
+    def test__execute_client_script_async(self):
+        self.verify__execute_client_script_call(True)
 
-    @parameterized.expand([
-        (AngularVersion.VER_1, False),
-        (AngularVersion.HYBRID, True),
-        (AngularVersion.VER_2, False)
-    ])
-    def test__execute_client_script_sync(self, angular_version, hybrid):
-        print(hybrid)
-        self.verify__execute_client_script_call(False, angular_version, hybrid)
+    def test__execute_client_script_sync(self):
+        self.verify__execute_client_script_call(False)
 
     def verify_function_executes_script_with(self, func_to_call,
                                              script_name, *script_args,
@@ -179,7 +163,7 @@ class WebDriverMixinTest(unittest.TestCase):
     def test_wait_for_angular(self):
         self.verify_function_executes_script_with(
             self.instance.wait_for_angular,
-            'waitForAngular', self.mock_root_element, async=True
+            'waitForAngular', self.mock_root_element, False, async=True
         )
 
     def test_wait_for_angular_does_not_call_script_if_ignore_synchronization(
@@ -201,7 +185,8 @@ class WebDriverMixinTest(unittest.TestCase):
         self.instance._test_timeout = 5000
         self.verify_function_executes_script_with(
             self.instance._test_for_angular,
-            'testForAngular', self.instance._test_timeout / 1000
+            'testForAngular', self.instance._test_timeout / 1000,
+            False
         )
 
     def test__location_equals(self):
@@ -343,7 +328,7 @@ class WebDriverMixinTest(unittest.TestCase):
         mock_super.return_value.get.assert_called_once_with('about:blank')
         self.assertEqual(len(mock_execute_script.mock_calls), 2)
         mock_webdriverwait_class.assert_called_once_with(self.instance,
-                                                         10)
+                                                         5000)
         mock_webdriverwait_instance = mock_webdriverwait_class.return_value
         mock_webdriverwait_instance.until_not.assert_called_once_with(
             self.instance._location_equals, 'about:blank'
@@ -371,7 +356,7 @@ class WebDriverMixinTest(unittest.TestCase):
         mock_super.return_value.get.assert_called_once_with('about:blank')
         self.assertEqual(len(mock_execute_script.mock_calls), 1)
         mock_webdriverwait_class.assert_called_once_with(self.instance,
-                                                         10)
+                                                         5000)
         mock_webdriverwait_instance = mock_webdriverwait_class.return_value
         mock_webdriverwait_instance.until_not.assert_called_once_with(
             self.instance._location_equals, 'about:blank'

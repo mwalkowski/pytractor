@@ -77,7 +77,7 @@ class WebDriverMixin(object):
     """  # docstring adapted from protractor.js
 
     def __init__(self, base_url='', root_element='body', script_timeout=10,
-                 test_timeout=10, angular_version=AngularVersion.VER_1, *args, **kwargs):
+                 test_timeout=5000, angular_version=AngularVersion.VER_1, *args, **kwargs):
         self._base_url = base_url
         self._root_element = root_element
         self._test_timeout = test_timeout
@@ -91,8 +91,6 @@ class WebDriverMixin(object):
         js_script = resource_string(__name__,
                                     '{}/{}'.format(CLIENT_SCRIPTS_DIR,
                                                    file_name))
-
-        args = args + (AngularVersion.is_hybrid(self.angular_version), )
 
         if js_script:
             js_script = js_script.decode('UTF-8')
@@ -108,6 +106,7 @@ class WebDriverMixin(object):
         else:
             return self._execute_client_script('waitForAngular',
                                                self._root_element,
+                                               AngularVersion.is_hybrid(self.angular_version),
                                                async=True)
 
     def execute(self, driver_command, params=None):
@@ -120,7 +119,8 @@ class WebDriverMixin(object):
 
     def _test_for_angular(self):
         return self._execute_client_script('testForAngular',
-                                           floor(self._test_timeout / 1000))
+                                           floor(self._test_timeout / 1000),
+                                           AngularVersion.is_hybrid(self.angular_version))
 
     def _location_equals(self, location):
         result = self.execute_script('return window.location.href')
@@ -212,6 +212,10 @@ class WebDriverMixin(object):
         if elements is None:
             elements = []
         return elements
+
+    def find_element_by_button_text(self, text, using=None):
+        return self._execute_client_script(
+            'findByButtonText', text, using, async=False)
 
     def get(self, url):
         super(WebDriverMixin, self).get('about:blank')
