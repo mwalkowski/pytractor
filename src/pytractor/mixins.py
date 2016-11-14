@@ -61,7 +61,10 @@ class AngularVersion(object):
 def angular_wait_required(wrapped):
     @wraps(wrapped)
     def wait_for_angular(driver, *args, **kwargs):
-        driver.wait_for_angular()
+        if driver.angular_version == AngularVersion.VER_2:
+            driver.wait_for_angular2()
+        else:
+            driver.wait_for_angular()
         return wrapped(driver, *args, **kwargs)
     return wait_for_angular
 
@@ -101,18 +104,24 @@ class WebDriverMixin(object):
         return result
 
     def wait_for_angular(self):
-        if self.ignore_synchronization:
-            return
-        else:
+        if not self.ignore_synchronization:
             return self._execute_client_script('waitForAngular',
                                                self._root_element,
                                                AngularVersion.is_hybrid(self.angular_version),
                                                async=True)
 
+    def wait_for_angular2(self):
+        if not self.ignore_synchronization:
+            return self._execute_client_script(
+                'waitForAllAngular2', async=True)
+
     def execute(self, driver_command, params=None):
         # We also get called from WebElement methods/properties.
-        if driver_command in COMMANDS_NEEDING_WAIT:
-            self.wait_for_angular()
+        if driver_command in COMMANDS_NEEDING_WAIT and not self.ignore_synchronization:
+            if self.angular_version == AngularVersion.VER_2:
+                self.wait_for_angular2()
+            else:
+                self.wait_for_angular()
 
         return super(WebDriverMixin, self).execute(driver_command,
                                                    params=params)
@@ -214,8 +223,10 @@ class WebDriverMixin(object):
         return elements
 
     def find_element_by_button_text(self, text, using=None):
-        return self._execute_client_script(
+        element = self._execute_client_script(
             'findByButtonText', text, using, async=False)
+        if element:
+            return element[0]
 
     def get(self, url):
         super(WebDriverMixin, self).get('about:blank')
@@ -231,6 +242,7 @@ class WebDriverMixin(object):
 
         if not self.ignore_synchronization:
             test_result = self._test_for_angular()
+            print(test_result)
             if not test_result or 'message' in test_result:
                 message = test_result['message']
                 raise AngularNotFoundException(
@@ -241,7 +253,8 @@ class WebDriverMixin(object):
             # return self.execute_script(
             #     'angular.resumeBootstrap(arguments[0]);'
             # )
-            self.execute_script('angular.resumeBootstrap();')
+            if 'ver' in test_result and test_result['ver'] != 2:
+                self.execute_script('angular.resumeBootstrap();')
 
     def refresh(self):
         url = self.execute_script('return window.location.href')

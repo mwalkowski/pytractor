@@ -39,7 +39,8 @@ class AngularWaitRequiredDecoratorTest(unittest.TestCase):
 
     def test_angular_wait_required(self):
         with patch.multiple(self, wait_for_angular=DEFAULT,
-                            check_function=DEFAULT, create=True) as patched:
+                            check_function=DEFAULT, create=True,
+                            angular_version=AngularVersion.VER_1) as patched:
             mock_wait_for_angular = patched['wait_for_angular']
             mock_check_function = patched['check_function']
             mock_arg = MagicMock()
@@ -53,6 +54,23 @@ class AngularWaitRequiredDecoratorTest(unittest.TestCase):
         mock_check_function.assert_called_once_with(mock_arg,
                                                     kwarg=mock_kwarg)
 
+    def test_angular_wait_required_with_angular_2(self):
+        with patch.multiple(self, wait_for_angular2=DEFAULT,
+                            check_function=DEFAULT, create=True,
+                            angular_version=AngularVersion.VER_2) as patched:
+            mock_wait_for_angular2 = patched['wait_for_angular2']
+            mock_check_function = patched['check_function']
+            mock_arg = MagicMock()
+            mock_kwarg = MagicMock()
+            result = self.wrapped_function(mock_arg, kwarg=mock_kwarg)
+
+        # result should be the result of the wrapped function
+        self.assertIs(result, mock_check_function.return_value)
+        # wait_for_angular() should have been called
+        mock_wait_for_angular2.assert_called_once_with()
+        # the check function should have been called
+        mock_check_function.assert_called_once_with(mock_arg,
+                                                    kwarg=mock_kwarg)
 
 class WebDriverMixinConstructorTest(unittest.TestCase):
     class ConstructorTester(object):
@@ -326,7 +344,7 @@ class WebDriverMixinTest(unittest.TestCase):
             self.instance.get(mock_url)
         mock_super.assert_called_once_with(WebDriverMixin, self.instance)
         mock_super.return_value.get.assert_called_once_with('about:blank')
-        self.assertEqual(len(mock_execute_script.mock_calls), 2)
+        self.assertEqual(len(mock_execute_script.mock_calls), 1)
         mock_webdriverwait_class.assert_called_once_with(self.instance,
                                                          5000)
         mock_webdriverwait_instance = mock_webdriverwait_class.return_value
