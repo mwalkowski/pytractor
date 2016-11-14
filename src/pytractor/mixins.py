@@ -82,11 +82,11 @@ class WebDriverMixin(object):
     """  # docstring adapted from protractor.js
 
     def __init__(self, base_url='', root_element='body', script_timeout=10,
-                 test_timeout=5000, angular_version=AngularVersion.VER_1, *args, **kwargs):
+                 test_timeout=5000, *args, **kwargs):
         self._base_url = base_url
         self._root_element = root_element
         self._test_timeout = test_timeout
-        self.angular_version = angular_version
+        self.angular_version = None
         super(WebDriverMixin, self).__init__(*args, **kwargs)
         self.set_script_timeout(script_timeout)
 
@@ -244,7 +244,6 @@ class WebDriverMixin(object):
 
         if not self.ignore_synchronization:
             test_result = self._test_for_angular()
-            print(test_result)
             if not test_result or 'message' in test_result:
                 message = test_result['message']
                 raise AngularNotFoundException(
@@ -255,7 +254,10 @@ class WebDriverMixin(object):
             # return self.execute_script(
             #     'angular.resumeBootstrap(arguments[0]);'
             # )
-            if 'ver' in test_result and test_result['ver'] != 2:
+            if 'ver' in test_result and test_result['ver'] == 2:
+                self.angular_version = AngularVersion.VER_2
+            elif 'ver' in test_result and test_result['ver'] == 1:
+                self.angular_version = AngularVersion.HYBRID
                 self.execute_script('angular.resumeBootstrap();')
 
     def refresh(self):

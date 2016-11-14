@@ -1,6 +1,5 @@
 from unittest import TestCase
 
-from pytractor.mixins import AngularVersion
 from pytractor.tests.functional import SimpleWebServerProcess
 from pytractor.tests.functional.testdriver import TestDriver
 
@@ -12,8 +11,7 @@ class Angular2Test(TestCase):
     def setUpClass(cls):
         cls.driver = TestDriver(
             'http://localhost:{}/'.format(SimpleWebServerProcess.PORT),
-            'body',
-            angular_version=AngularVersion.VER_2
+            'body'
         )
 
     @classmethod
