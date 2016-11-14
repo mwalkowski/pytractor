@@ -16,7 +16,7 @@ Overview
 It is built on some parts of `protractor <https://github.com/angular/protractor>`_, the "official" Javascript E2E/Scenario testing framework for `Angular.js <https://angularjs.org/>`_.
 
 Supported Version
-_________________
+-----------------
 
 Angular 1
 Angular 1.5 (hybrid)
@@ -123,7 +123,6 @@ Suppose you have the element
 
     <button class="action">text</button>
 
-::
 
 Other Methods and Properties
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
