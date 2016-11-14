@@ -17,6 +17,7 @@ It is built on some parts of `protractor <https://github.com/angular/protractor>
 
 Supported Version
 _________________
+
 Angular 1
 Angular 1.5 (hybrid)
 Angular 2
@@ -121,6 +122,8 @@ Suppose you have the element
 ::
 
     <button class="action">text</button>
+
+::
 
 Other Methods and Properties
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
