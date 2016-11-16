@@ -63,10 +63,7 @@ class AngularVersion(object):
 def angular_wait_required(wrapped):
     @wraps(wrapped)
     def wait_for_angular(driver, *args, **kwargs):
-        if driver.angular_version == AngularVersion.VER_2:
-            driver.wait_for_angular2()
-        else:
-            driver.wait_for_angular()
+        driver.wait_for_angular()
         return wrapped(driver, *args, **kwargs)
     return wait_for_angular
 
@@ -107,23 +104,18 @@ class WebDriverMixin(object):
 
     def wait_for_angular(self):
         if not self.ignore_synchronization:
-            return self._execute_client_script('waitForAngular',
-                                               self._root_element,
-                                               AngularVersion.is_hybrid(self.angular_version),
-                                               async=True)
-
-    def wait_for_angular2(self):
-        if not self.ignore_synchronization:
-            return self._execute_client_script(
-                'waitForAllAngular2', async=True)
+            if self.angular_version == AngularVersion.VER_2:
+                return self._execute_client_script(
+                    'waitForAllAngular2', async=True)
+            else:
+                return self._execute_client_script(
+                    'waitForAngular', self._root_element,
+                    AngularVersion.is_hybrid(self.angular_version), async=True)
 
     def execute(self, driver_command, params=None):
         # We also get called from WebElement methods/properties.
         if driver_command in COMMANDS_NEEDING_WAIT and not self.ignore_synchronization:
-            if self.angular_version == AngularVersion.VER_2:
-                self.wait_for_angular2()
-            else:
-                self.wait_for_angular()
+            self.wait_for_angular()
 
         return super(WebDriverMixin, self).execute(driver_command,
                                                    params=params)
@@ -254,11 +246,15 @@ class WebDriverMixin(object):
             # return self.execute_script(
             #     'angular.resumeBootstrap(arguments[0]);'
             # )
-            if 'ver' in test_result and test_result['ver'] == 2:
+            if 'ver' in test_result and test_result['ver'] == 2\
+                    or self.angular_version == AngularVersion.VER_2:
                 self.angular_version = AngularVersion.VER_2
-            elif 'ver' in test_result and test_result['ver'] == 1:
+            elif 'ver' in test_result and test_result['ver'] == 1\
+                    or self.angular_version == AngularVersion.HYBRID:
                 self.angular_version = AngularVersion.HYBRID
                 self.execute_script('angular.resumeBootstrap();')
+
+        self.wait_for_angular()
 
     def refresh(self):
         url = self.execute_script('return window.location.href')

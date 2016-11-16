@@ -54,23 +54,6 @@ class AngularWaitRequiredDecoratorTest(unittest.TestCase):
         mock_check_function.assert_called_once_with(mock_arg,
                                                     kwarg=mock_kwarg)
 
-    def test_angular_wait_required_with_angular_2(self):
-        with patch.multiple(self, wait_for_angular2=DEFAULT,
-                            check_function=DEFAULT, create=True,
-                            angular_version=AngularVersion.VER_2) as patched:
-            mock_wait_for_angular2 = patched['wait_for_angular2']
-            mock_check_function = patched['check_function']
-            mock_arg = MagicMock()
-            mock_kwarg = MagicMock()
-            result = self.wrapped_function(mock_arg, kwarg=mock_kwarg)
-
-        # result should be the result of the wrapped function
-        self.assertIs(result, mock_check_function.return_value)
-        # wait_for_angular() should have been called
-        mock_wait_for_angular2.assert_called_once_with()
-        # the check function should have been called
-        mock_check_function.assert_called_once_with(mock_arg,
-                                                    kwarg=mock_kwarg)
 
 class WebDriverMixinConstructorTest(unittest.TestCase):
     class ConstructorTester(object):
@@ -334,6 +317,7 @@ class WebDriverMixinTest(unittest.TestCase):
             'pytractor.mixins.WebDriverWait'
         ) as mock_webdriverwait_class, patch.multiple(
             self.instance, _test_for_angular=DEFAULT, execute_script=DEFAULT,
+            execute_async_script=DEFAULT,
             create=True  # needed for execute_script
         ) as mock_methods:
             mock_test_for_angular = mock_methods['_test_for_angular']
